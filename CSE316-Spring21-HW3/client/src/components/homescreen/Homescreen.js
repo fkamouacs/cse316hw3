@@ -14,8 +14,10 @@ import { WLayout, WLHeader, WLMain, WLSide } from 'wt-frontend';
 import { UpdateListField_Transaction, 
 	UpdateListItems_Transaction, 
 	ReorderItems_Transaction, 
-	EditItem_Transaction } 				from '../../utils/jsTPS';
+	EditItem_Transaction,
+	SortItems_Transaction } 				from '../../utils/jsTPS';
 import WInput from 'wt-frontend/build/components/winput/WInput';
+// import { setMaxListeners } from '../../../../models/item-model';
 
 
 const Homescreen = (props) => {
@@ -26,6 +28,7 @@ const Homescreen = (props) => {
 	const [showLogin, toggleShowLogin] 		= useState(false);
 	const [showCreate, toggleShowCreate] 	= useState(false);
 
+	const [SortItems] 				= useMutation(mutations.SORT_ITEMS);
 	const [ReorderTodoItems] 		= useMutation(mutations.REORDER_ITEMS);
 	const [UpdateTodoItemField] 	= useMutation(mutations.UPDATE_ITEM_FIELD);
 	const [UpdateTodolistField] 	= useMutation(mutations.UPDATE_TODOLIST_FIELD);
@@ -127,6 +130,71 @@ const Homescreen = (props) => {
 
 	};
 
+	const sortItems = async (sortingCriteria) => {
+		let listID = activeList._id;
+		let oldItemsIds = [];
+		let itemsToSort = [];
+		for (let i = 0; i < activeList.items.length; i++) {
+			let item = activeList.items[i];
+			oldItemsIds.push(item.id);
+			itemsToSort.push(item);
+		}
+		let sortIncreasing = true;
+		let isIncreaseing = await isInIncreasingOrder(itemsToSort, sortingCriteria);
+		if (isIncreaseing) {
+			sortIncreasing = false;
+		}
+
+		let compareFunction = await makeCompareFunction(sortingCriteria, sortIncreasing);
+		itemsToSort = itemsToSort.sort(compareFunction);
+
+		let newItemsIds = [];
+		for (let i = 0; i < itemsToSort.length; i++) {
+			let item = itemsToSort[i];
+			newItemsIds.push(item.id);
+		}
+		
+		let transaction = new SortItems_Transaction(listID, oldItemsIds, newItemsIds, SortItems);
+		props.tps.addTransaction(transaction);
+		tpsRedo();
+	}
+
+	const isInIncreasingOrder = async (itemsToTest, sortingCriteria) => {
+		for (let i = 0; i < itemsToTest.length - 1; i++) {
+			if (itemsToTest[i][sortingCriteria] > itemsToTest[i + 1][sortingCriteria]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	const makeCompareFunction = async (criteria, increasing) => {
+		return function (item1, item2) {
+			let negate = -1;
+			if (increasing) {
+				negate = 1;
+			}
+			let value1 = item1[criteria];
+			let value2 = item2[criteria];
+			if (value1 < value2) {
+				return -1 * negate;
+			} else if (value1 === value2) {
+				return 0;
+			} else {
+				return 1 * negate;
+			}
+		}
+	}
+	
+	const indexOfItemInCurrentList = async (itemId) => {
+		for (let i = 0; i < activeList.items.length; i++) {
+			if (activeList.items[i].id == itemId) {
+				return i;
+			}
+			return -1;
+		}
+	}
+
 	const createNewList = async () => {
 		const length = todolists.length
 		const id = length >= 1 ? todolists[length - 1].id + Math.floor((Math.random() * 100) + 1) : 1;
@@ -226,6 +294,7 @@ const Homescreen = (props) => {
 									editItem={editItem} reorderItem={reorderItem}
 									setShowDelete={setShowDelete}
 									activeList={activeList} setActiveList={setActiveList}
+									sortItems={sortItems}
 								/>
 							</div>
 						:

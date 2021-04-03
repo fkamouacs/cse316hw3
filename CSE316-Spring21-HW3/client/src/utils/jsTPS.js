@@ -118,7 +118,25 @@ export class UpdateListItems_Transaction extends jsTPS_Transaction {
     }
 }
 
+export class SortItems_Transaction extends jsTPS_Transaction {
+    constructor(listID, oldItemsId, newItemsId, callback) {
+        super();
+        this.listID = listID;
+		this.oldItemsId = oldItemsId;
+        this.newItemsId = newItemsId;
+        this.updateFunction = callback;
+    }
 
+    async doTransaction() {
+		const { data } = await this.updateFunction({ variables: { _id: this.listID, items: this.newItemsId}});
+		return data;
+    }
+    
+    async undoTransaction() {
+        const { data } = await this.updateFunction({ variables: { _id: this.listID, items: this.oldItemsId}});
+		return data;
+    }
+}
 
 
 export class jsTPS {
