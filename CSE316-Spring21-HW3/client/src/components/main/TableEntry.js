@@ -4,13 +4,16 @@ import { WButton, WInput, WRow, WCol } from 'wt-frontend';
 const TableEntry = (props) => {
     const { data } = props;
 
+    const assignedStyle = data.completed ? 'assigned-complete' : 'assigned-incomplete';
     const completeStyle = data.completed ? ' complete-task' : ' incomplete-task';
 
     const description = data.description;
     const due_date = data.due_date;
+    const assigned_to = data.assigned_to;
     const status = data.completed ? 'complete' : 'incomplete';
     const [editingDate, toggleDateEdit] = useState(false);
     const [editingDescr, toggleDescrEdit] = useState(false);
+    const [editingAssigned, toggleAssignedEdit] = useState(false);
     const [editingStatus, toggleStatusEdit] = useState(false);
 
     const handleDateEdit = (e) => {
@@ -25,6 +28,13 @@ const TableEntry = (props) => {
         const newDescr = e.target.value ? e.target.value : 'No Description';
         const prevDescr = description;
         props.editItem(data._id, 'description', newDescr, prevDescr);
+    };
+
+    const handleAssignedEdit = (e) => {
+        toggleAssignedEdit(false);
+        const newAssigned = e.target.value ? e.target.value : 'Not Assigned';
+        const prevAssigned = assigned_to;
+        props.editItem(data._id, 'assigned_to', newAssigned, prevAssigned);
     };
 
     const handleStatusEdit = (e) => {
@@ -67,6 +77,21 @@ const TableEntry = (props) => {
 
             <WCol size="2">
                 {
+                    editingAssigned || assigned_to === ''
+                    ? <WInput
+                        className='table-input'onBlur={handleAssignedEdit}
+                        autoFocus={true} defaultValue={assigned_to} type='text'
+                        wType="outlined" barAnimation="solid" inputClass="table-input-class"
+                    />
+                    : <div className={`table-text ${assignedStyle}`}
+                        onClick={() => toggleAssignedEdit(!editingAssigned)}
+                    >{assigned_to}
+                    </div>
+                }
+            </WCol>
+
+            <WCol size="2">
+                {
                     editingStatus ? <select
                         className='table-select' onBlur={handleStatusEdit}
                         autoFocus={true} defaultValue={status}
@@ -80,7 +105,7 @@ const TableEntry = (props) => {
                 }
             </WCol>
 
-            <WCol size="3">
+            <WCol size="1">
                 <div className='button-group'>
                     <WButton className="table-entry-buttons" onClick={() => props.reorderItem(data._id, -1)} wType="texted">
                         <i className="material-icons">expand_less</i>

@@ -16,6 +16,9 @@ const TableHeader = (props) => {
             case 'Due Date':
                 props.sortItems('due_date');
                 break;
+            case 'Assigned':
+                props.sortItems('assigned_to');
+                break;
             case 'Status':
                 props.sortItems('completed');
                 break;
@@ -33,10 +36,14 @@ const TableHeader = (props) => {
             </WCol>
 
             <WCol size="2">
+                <WButton className={`${headerStyle}`} wType="texted" onClick={props.disabled ? clickDisabled : handleColumnClick} >Assigned</WButton>
+            </WCol>
+
+            <WCol size="2">
                 <WButton className={`${headerStyle}`} wType="texted" onClick={props.disabled ? clickDisabled : handleColumnClick}>Status</WButton>
             </WCol>
 
-            <WCol size="3">
+            <WCol size="1">
                 <div className="table-header-buttons">
                     <WButton onClick={props.disabled ? clickDisabled : props.addItem} wType="texted" className={`${buttonStyle}`}>
                         <i className="material-icons">add_box</i>
